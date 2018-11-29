@@ -33,6 +33,7 @@ package com.raywenderlich.android.rwdc2018.repository
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
+import android.os.AsyncTask
 import com.raywenderlich.android.rwdc2018.app.PhotosUtils
 
 class PhotosRepository : Repository {
@@ -40,11 +41,15 @@ class PhotosRepository : Repository {
   private val bannerLiveData = MutableLiveData<String>()
 
   override fun getPhotos(): LiveData<List<String>> {
-    fetchJsonData()
+//    fetchPhotoData()
+
+    FetchPhotoAsyncTask { photos ->
+      photosLiveData.value = photos
+    }.execute()
     return photosLiveData
   }
 
-  private fun fetchJsonData() {
+  private fun fetchPhotoData() {
 
     val runnable = Runnable {
       val photoString = PhotosUtils.photoJsonString()
@@ -56,6 +61,19 @@ class PhotosRepository : Repository {
     }
     val thread = Thread(runnable)
     thread.start()
+
+  }
+
+  override fun getBanner(): LiveData<String> {
+    //    fetchBannerData()
+
+    FetchBannerAsyncTask(callBack = { banner ->
+      bannerLiveData.value = banner
+    }).execute()
+    return bannerLiveData
+  }
+
+  private fun fetchBannerData() {
 
     val runnableBanner = Runnable {
       val bannerString = PhotosUtils.photoJsonString()
@@ -72,7 +90,32 @@ class PhotosRepository : Repository {
 
   }
 
-  override fun getBanner(): LiveData<String> {
-    return bannerLiveData
+  class FetchPhotoAsyncTask(val callBack: (List<String>) -> Unit) : AsyncTask<Void, Void, List<String>>() {
+    override fun doInBackground(vararg params: Void?): List<String>? {
+      val photoString = PhotosUtils.photoJsonString()
+      val photos = PhotosUtils.photoUrlsFromJsonString(photoString ?: "")
+      return photos
+    }
+
+    override fun onPostExecute(result: List<String>?) {
+      if (result != null) {
+        callBack(result)
+      }
+    }
   }
+
+  class FetchBannerAsyncTask(val callBack: (String) -> Unit) : AsyncTask<Void, Void, String>() {
+    override fun doInBackground(vararg params: Void?): String? {
+      val bannerString = PhotosUtils.photoJsonString()
+      val banner= PhotosUtils.bannerFromJsonString(bannerString ?: "")
+      return banner
+    }
+
+    override fun onPostExecute(result: String?) {
+      if (result != null) {
+        callBack(result)
+      }
+    }
+  }
+
 }
