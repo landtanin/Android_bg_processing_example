@@ -45,13 +45,6 @@ class PhotosRepository : Repository {
   }
 
   private fun fetchJsonData() {
-//    val handler = object : Handler(Looper.getMainLooper()) {
-//      override fun handleMessage(msg: Message?) {
-//        val dataBundle = msg?.data
-//        val photos = dataBundle?.getStringArrayList("PHOTOS_KEY")
-//        photosLiveData.value = photos
-//      }
-//    }
 
     val runnable = Runnable {
       val photoString = PhotosUtils.photoJsonString()
@@ -59,15 +52,24 @@ class PhotosRepository : Repository {
 
       if (photos != null) {
         photosLiveData.postValue(photos)
-//        val msg = Message()
-//        val bundle = Bundle()
-//        bundle.putStringArrayList("PHOTOS_KEY", photos)
-//        msg.data = bundle
-//        handler.sendMessage(msg)
       }
     }
     val thread = Thread(runnable)
     thread.start()
+
+    val runnableBanner = Runnable {
+      val bannerString = PhotosUtils.photoJsonString()
+      val banner= PhotosUtils.bannerFromJsonString(bannerString ?: "")
+
+      if (banner != null) {
+        bannerLiveData.postValue(banner)
+      }
+    }
+
+    // run the new thread concurrently
+    val bannerThread = Thread(runnableBanner)
+    bannerThread.start()
+
   }
 
   override fun getBanner(): LiveData<String> {
