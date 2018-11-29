@@ -33,10 +33,6 @@ package com.raywenderlich.android.rwdc2018.repository
 
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
 import com.raywenderlich.android.rwdc2018.app.PhotosUtils
 
 class PhotosRepository : Repository {
@@ -49,25 +45,25 @@ class PhotosRepository : Repository {
   }
 
   private fun fetchJsonData() {
-    val handler = object : Handler(Looper.getMainLooper()) {
-      override fun handleMessage(msg: Message?) {
-        val dataBundle = msg?.data
-        val photos = dataBundle?.getStringArrayList("PHOTOS_KEY")
-        photosLiveData.value = photos
-      }
-    }
+//    val handler = object : Handler(Looper.getMainLooper()) {
+//      override fun handleMessage(msg: Message?) {
+//        val dataBundle = msg?.data
+//        val photos = dataBundle?.getStringArrayList("PHOTOS_KEY")
+//        photosLiveData.value = photos
+//      }
+//    }
 
     val runnable = Runnable {
       val photoString = PhotosUtils.photoJsonString()
       val photos = PhotosUtils.photoUrlsFromJsonString(photoString ?: "")
 
       if (photos != null) {
-//        photosLiveData.value = photos
-        val msg = Message()
-        val bundle = Bundle()
-        bundle.putStringArrayList("PHOTOS_KEY", photos)
-        msg.data = bundle
-        handler.sendMessage(msg)
+        photosLiveData.postValue(photos)
+//        val msg = Message()
+//        val bundle = Bundle()
+//        bundle.putStringArrayList("PHOTOS_KEY", photos)
+//        msg.data = bundle
+//        handler.sendMessage(msg)
       }
     }
     val thread = Thread(runnable)
