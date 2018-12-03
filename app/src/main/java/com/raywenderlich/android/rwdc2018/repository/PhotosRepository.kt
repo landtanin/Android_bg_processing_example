@@ -38,16 +38,29 @@ import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.content.ComponentName
 import android.os.AsyncTask
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
 import com.raywenderlich.android.rwdc2018.app.PhotosUtils
 import com.raywenderlich.android.rwdc2018.app.RWDC2018Application
+import com.raywenderlich.android.rwdc2018.service.DownloadWorker
+import com.raywenderlich.android.rwdc2018.service.LogJobService
 import com.raywenderlich.android.rwdc2018.service.PhotosJobService
+import java.util.concurrent.TimeUnit
 
 class PhotosRepository : Repository {
   private val photosLiveData = MutableLiveData<List<String>>()
   private val bannerLiveData = MutableLiveData<String>()
 
+  companion object {
+    private const val PHOTO_DOWNLOAD_TAG = "PHOTO_DOWNLOAD_TAG"
+  }
+
   init {
-    scheduleFetchJob()
+//    scheduleFetchJob()
+//    scheduleLogJob()
+    schedulePeriodicWork()
   }
 
   override fun getPhotos(): LiveData<List<String>> {
@@ -93,6 +106,39 @@ class PhotosRepository : Repository {
       .build()
 
     jobScheduler.schedule(jobInfo)
+
+  }
+
+  private fun scheduleLogJob() {
+    val jobScheduler = RWDC2018Application.getAppContext()
+      .getSystemService(Service.JOB_SCHEDULER_SERVICE) as JobScheduler
+
+    val logJobInfo = JobInfo.Builder(
+      1001,
+      ComponentName(RWDC2018Application.getAppContext(), LogJobService::class.java))
+      .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+      .build()
+
+    jobScheduler.schedule(logJobInfo)
+
+  }
+
+  private fun schedulePeriodicWork() {
+
+    val constraints = Constraints.Builder()
+      .setRequiredNetworkType(NetworkType.CONNECTED)
+      .setRequiresStorageNotLow(true)
+      .build()
+
+    val request = PeriodicWorkRequest.Builder(DownloadWorker::class.java, 15, TimeUnit.MINUTES)
+      .setConstraints(constraints)
+      .addTag(PHOTO_DOWNLOAD_TAG)
+      .build()
+
+    val workManager = WorkManager.getInstance()
+
+    workManager.cancelAllWorkByTag(PHOTO_DOWNLOAD_TAG)
+    workManager.enqueue(request)
 
   }
 
