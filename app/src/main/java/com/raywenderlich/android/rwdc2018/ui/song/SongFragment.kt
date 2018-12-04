@@ -37,7 +37,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.raywenderlich.android.rwdc2018.R
+import com.raywenderlich.android.rwdc2018.app.Constants.SONG_URL
 import com.raywenderlich.android.rwdc2018.app.SongUtils
+import com.raywenderlich.android.rwdc2018.service.DownloadIntentService
 import kotlinx.android.synthetic.main.fragment_song.*
 
 class SongFragment : Fragment() {
@@ -56,6 +58,16 @@ class SongFragment : Fragment() {
     super.onResume()
 
     if (!SongUtils.songFile().exists()) {
+      playButton.isEnabled = false
+      stopButton.isEnabled = false
+    }
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+
+    downloadButton.setOnClickListener {
+      DownloadIntentService.startActionDownload(view.context, SONG_URL)
       playButton.isEnabled = false
       stopButton.isEnabled = false
     }
