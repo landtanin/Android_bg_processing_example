@@ -3,6 +3,7 @@ package com.raywenderlich.android.rwdc2018.service
 import android.app.IntentService
 import android.content.Context
 import android.content.Intent
+import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import com.raywenderlich.android.rwdc2018.app.SongUtils
 
@@ -12,6 +13,8 @@ class DownloadIntentService : IntentService("DownloadIntentService") {
     private const val TAG = "DownloadIntentService"
     private const val ACTION_DOWNLOAD = "ACTION_DOWNLOAD"
     private const val EXTRA_URL = "EXTRA_URL"
+    const val DOWNLOAD_COMPLETE = "DOWNLOAD_COMPLETE"
+    const val DOWNLOAD_COMPLETE_KEY = "DOWNLOAD_COMPLETE_KEY"
 
     fun startActionDownload(context: Context, param: String) {
       val intent = Intent(context, DownloadIntentService::class.java).apply {
@@ -45,6 +48,15 @@ class DownloadIntentService : IntentService("DownloadIntentService") {
     Log.i(TAG, "start download $param")
     SongUtils.download(param)
     Log.i(TAG, "end download $param")
+
+    Log.i(TAG, "Sending broadcast for $param")
+    broadcastDownloadComplete(param)
+  }
+
+  private fun broadcastDownloadComplete(param: String) {
+    val intent = Intent(DOWNLOAD_COMPLETE)
+    intent.putExtra(DOWNLOAD_COMPLETE_KEY, param)
+    LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
   }
 
 }
