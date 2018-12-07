@@ -16,7 +16,7 @@ class DownloadWorker(context: Context, params: WorkerParameters)
   override fun doWork(): Result {
 
     val needsRetry = try {
-      val response = PhotosUtils.fetchJsonString()
+      val response = PhotosUtils.fetchJsonString() // this will save the photos in local memory
       (response == null)
     } catch (e: InterruptedException) {
       Log.e(TAG, "Error fetchJsonString: ${e.localizedMessage}")

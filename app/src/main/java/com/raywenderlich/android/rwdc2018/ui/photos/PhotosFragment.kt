@@ -41,7 +41,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.raywenderlich.android.rwdc2018.R
+import com.raywenderlich.android.rwdc2018.app.Constants
 import com.raywenderlich.android.rwdc2018.app.Injection
+import com.raywenderlich.android.rwdc2018.app.RWDC2018Application
+import com.raywenderlich.android.rwdc2018.service.FetchIntentService
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.fragment_photos.*
 
@@ -79,4 +82,18 @@ class PhotosFragment : Fragment() {
       photosRecyclerView.adapter = adapter
     })
   }
+
+  override fun onStart() {
+    super.onStart()
+    viewModel.onStart()
+    FetchIntentService.startActionPhotosDownload(
+      RWDC2018Application.getAppContext(),
+      Constants.PHOTOS_URL)
+  }
+
+  override fun onStop() {
+    viewModel.onStop()
+    super.onStop()
+  }
+
 }

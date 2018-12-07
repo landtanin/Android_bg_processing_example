@@ -11,14 +11,14 @@ class DownloadIntentService : IntentService("DownloadIntentService") {
 
   companion object {
     private const val TAG = "DownloadIntentService"
-    private const val ACTION_DOWNLOAD = "ACTION_DOWNLOAD"
+    private const val ACTION_DOWNLOAD_SONG = "ACTION_DOWNLOAD"
     private const val EXTRA_URL = "EXTRA_URL"
     const val DOWNLOAD_COMPLETE = "DOWNLOAD_COMPLETE"
     const val DOWNLOAD_COMPLETE_KEY = "DOWNLOAD_COMPLETE_KEY"
 
-    fun startActionDownload(context: Context, param: String) {
+    fun startActionSongsDownload(context: Context, param: String) {
       val intent = Intent(context, DownloadIntentService::class.java).apply {
-        action = ACTION_DOWNLOAD
+        action = ACTION_DOWNLOAD_SONG
         putExtra(EXTRA_URL, param)
       }
       context.startService(intent)
@@ -38,13 +38,13 @@ class DownloadIntentService : IntentService("DownloadIntentService") {
 
   override fun onHandleIntent(intent: Intent?) {
     when (intent?.action) {
-      ACTION_DOWNLOAD -> {
-        handleActionDownload(intent.getStringExtra(EXTRA_URL))
+      ACTION_DOWNLOAD_SONG -> {
+        handleActionDownloadSongs(intent.getStringExtra(EXTRA_URL))
       }
     }
   }
 
-  private fun handleActionDownload(param: String) {
+  private fun handleActionDownloadSongs(param: String) {
     Log.i(TAG, "start download $param")
     SongUtils.download(param)
     Log.i(TAG, "end download $param")

@@ -99,7 +99,7 @@ class SongFragment : Fragment() {
     super.onViewCreated(view, savedInstanceState)
 
     downloadButton.setOnClickListener {
-      DownloadIntentService.startActionDownload(view.context, SONG_URL)
+      DownloadIntentService.startActionSongsDownload(view.context, SONG_URL)
       playButton.isEnabled = false
       stopButton.isEnabled = false
     }

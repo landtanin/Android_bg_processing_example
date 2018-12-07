@@ -45,4 +45,12 @@ class PhotosViewModel(private val repository: Repository) : ViewModel() {
   fun getBanner(): LiveData<String> {
     return repository.getBanner()
   }
+
+  fun onStart() {
+    repository.registerBroadcastReceiver()
+  }
+
+  fun onStop() {
+    repository.unRegisterBroadcastReceiver()
+  }
 }

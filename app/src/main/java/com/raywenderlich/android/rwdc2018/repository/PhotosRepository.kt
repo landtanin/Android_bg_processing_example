@@ -31,13 +31,15 @@
 
 package com.raywenderlich.android.rwdc2018.repository
 
-import android.app.Service
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import android.content.ComponentName
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.AsyncTask
+import android.support.v4.content.LocalBroadcastManager
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequest
@@ -45,47 +47,71 @@ import androidx.work.WorkManager
 import com.raywenderlich.android.rwdc2018.app.PhotosUtils
 import com.raywenderlich.android.rwdc2018.app.RWDC2018Application
 import com.raywenderlich.android.rwdc2018.service.DownloadWorker
-import com.raywenderlich.android.rwdc2018.service.LogJobService
-import com.raywenderlich.android.rwdc2018.service.PhotosJobService
+import com.raywenderlich.android.rwdc2018.service.FetchIntentService
 import java.util.concurrent.TimeUnit
 
 class PhotosRepository : Repository {
   private val photosLiveData = MutableLiveData<List<String>>()
-  private val bannerLiveData = MutableLiveData<String>()
 
+  private val bannerLiveData = MutableLiveData<String>()
   companion object {
+
     private const val PHOTO_DOWNLOAD_TAG = "PHOTO_DOWNLOAD_TAG"
   }
-
   init {
 //    scheduleFetchJob()
 //    scheduleLogJob()
+
     schedulePeriodicWork()
+
+  }
+
+  private val receiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+      val param = intent?.extras?.getString(FetchIntentService.PHOTO_DOWNLOAD_COMPLETE_KEY)
+      Log.i("PhotosRepository", "Receiver received for param $param")
+
+      FetchPhotoAsyncTask { photos ->
+        photosLiveData.value = photos
+      }.execute()
+
+    }
+  }
+
+  override fun registerBroadcastReceiver() {
+    LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
+      .registerReceiver(receiver, IntentFilter(FetchIntentService.PHOTO_DOWNLOAD_COMPLETE))
+  }
+
+  override fun unRegisterBroadcastReceiver() {
+    LocalBroadcastManager.getInstance(RWDC2018Application.getAppContext())
+      .unregisterReceiver(receiver)
   }
 
   override fun getPhotos(): LiveData<List<String>> {
 //    fetchPhotoData()
 
-    FetchPhotoAsyncTask { photos ->
-      photosLiveData.value = photos
-    }.execute()
+//    FetchPhotoAsyncTask { photos ->
+//      photosLiveData.value = photos
+//    }.execute()
+
     return photosLiveData
   }
 
-  private fun fetchPhotoData() {
-
-    val runnable = Runnable {
-      val photoString = PhotosUtils.photoJsonString()
-      val photos = PhotosUtils.photoUrlsFromJsonString(photoString ?: "")
-
-      if (photos != null) {
-        photosLiveData.postValue(photos)
-      }
-    }
-    val thread = Thread(runnable)
-    thread.start()
-
-  }
+//  private fun fetchPhotoData() {
+//
+//    val runnable = Runnable {
+//      val photoString = PhotosUtils.photoJsonString()
+//      val photos = PhotosUtils.photoUrlsFromJsonString(photoString ?: "")
+//
+//      if (photos != null) {
+//        photosLiveData.postValue(photos)
+//      }
+//    }
+//    val thread = Thread(runnable)
+//    thread.start()
+//
+//  }
 
   override fun getBanner(): LiveData<String> {
     //    fetchBannerData()
@@ -96,32 +122,32 @@ class PhotosRepository : Repository {
     return bannerLiveData
   }
 
-  private fun scheduleFetchJob() {
-    val jobScheduler = RWDC2018Application.getAppContext()
-      .getSystemService(Service.JOB_SCHEDULER_SERVICE) as JobScheduler
-    val jobInfo = JobInfo.Builder(1000,
-      ComponentName(RWDC2018Application.getAppContext(), PhotosJobService::class.java))
-      .setPeriodic(900000) // 15 minutes in millisec
-      .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-      .build()
-
-    jobScheduler.schedule(jobInfo)
-
-  }
-
-  private fun scheduleLogJob() {
-    val jobScheduler = RWDC2018Application.getAppContext()
-      .getSystemService(Service.JOB_SCHEDULER_SERVICE) as JobScheduler
-
-    val logJobInfo = JobInfo.Builder(
-      1001,
-      ComponentName(RWDC2018Application.getAppContext(), LogJobService::class.java))
-      .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-      .build()
-
-    jobScheduler.schedule(logJobInfo)
-
-  }
+//  private fun scheduleFetchJob() {
+//    val jobScheduler = RWDC2018Application.getAppContext()
+//      .getSystemService(Service.JOB_SCHEDULER_SERVICE) as JobScheduler
+//    val jobInfo = JobInfo.Builder(1000,
+//      ComponentName(RWDC2018Application.getAppContext(), PhotosJobService::class.java))
+//      .setPeriodic(900000) // 15 minutes in millisec
+//      .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+//      .build()
+//
+//    jobScheduler.schedule(jobInfo)
+//
+//  }
+//
+//  private fun scheduleLogJob() {
+//    val jobScheduler = RWDC2018Application.getAppContext()
+//      .getSystemService(Service.JOB_SCHEDULER_SERVICE) as JobScheduler
+//
+//    val logJobInfo = JobInfo.Builder(
+//      1001,
+//      ComponentName(RWDC2018Application.getAppContext(), LogJobService::class.java))
+//      .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+//      .build()
+//
+//    jobScheduler.schedule(logJobInfo)
+//
+//  }
 
   private fun schedulePeriodicWork() {
 
@@ -142,22 +168,22 @@ class PhotosRepository : Repository {
 
   }
 
-  private fun fetchBannerData() {
-
-    val runnableBanner = Runnable {
-      val bannerString = PhotosUtils.photoJsonString()
-      val banner= PhotosUtils.bannerFromJsonString(bannerString ?: "")
-
-      if (banner != null) {
-        bannerLiveData.postValue(banner)
-      }
-    }
-
-    // run the new thread concurrently
-    val bannerThread = Thread(runnableBanner)
-    bannerThread.start()
-
-  }
+//  private fun fetchBannerData() {
+//
+//    val runnableBanner = Runnable {
+//      val bannerString = PhotosUtils.photoJsonString()
+//      val banner= PhotosUtils.bannerFromJsonString(bannerString ?: "")
+//
+//      if (banner != null) {
+//        bannerLiveData.postValue(banner)
+//      }
+//    }
+//
+//    // run the new thread concurrently
+//    val bannerThread = Thread(runnableBanner)
+//    bannerThread.start()
+//
+//  }
 
   class FetchPhotoAsyncTask(val callBack: (List<String>) -> Unit) : AsyncTask<Void, Void, List<String>>() {
     override fun doInBackground(vararg params: Void?): List<String>? {
