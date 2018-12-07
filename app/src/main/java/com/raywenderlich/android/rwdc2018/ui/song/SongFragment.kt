@@ -37,6 +37,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -47,6 +48,7 @@ import com.raywenderlich.android.rwdc2018.app.Constants.SONG_URL
 import com.raywenderlich.android.rwdc2018.app.RWDC2018Application
 import com.raywenderlich.android.rwdc2018.app.SongUtils
 import com.raywenderlich.android.rwdc2018.service.DownloadIntentService
+import com.raywenderlich.android.rwdc2018.service.SongService
 import kotlinx.android.synthetic.main.fragment_song.*
 
 class SongFragment : Fragment() {
@@ -64,7 +66,7 @@ class SongFragment : Fragment() {
       Log.i("SongFragment", "Receiver received of param $param")
 
       if (SongUtils.songFile().exists()) {
-        playButton.isEnabled = true
+        enablePlayButton()
       }
 
     }
@@ -77,9 +79,14 @@ class SongFragment : Fragment() {
   override fun onResume() {
     super.onResume()
 
+    if (RWDC2018Application.isSongPlaying) {
+      enableStopButton()
+    } else {
+      enablePlayButton()
+    }
+
     if (!SongUtils.songFile().exists()) {
-      playButton.isEnabled = false
-      stopButton.isEnabled = false
+      disableMediaButtons()
     }
   }
 
@@ -103,5 +110,42 @@ class SongFragment : Fragment() {
       playButton.isEnabled = false
       stopButton.isEnabled = false
     }
+
+    playButton.setOnClickListener {
+
+      val ctx = context
+      if (ctx != null) {
+        val intent = Intent(ctx, SongService::class.java)
+        ContextCompat.startForegroundService(ctx, intent)
+      }
+      enableStopButton()
+
+    }
+
+    stopButton.setOnClickListener {
+      stopPlaying()
+    }
+
   }
+
+  private fun stopPlaying() {
+    activity?.stopService(Intent(context, SongService::class.java))
+    enablePlayButton()
+  }
+
+  private fun enablePlayButton() {
+    playButton.isEnabled = true
+    stopButton.isEnabled = false
+  }
+
+  private fun enableStopButton() {
+    playButton.isEnabled = false
+    stopButton.isEnabled = true
+  }
+
+  private fun disableMediaButtons() {
+    playButton.isEnabled = false
+    stopButton.isEnabled = false
+  }
+
 }

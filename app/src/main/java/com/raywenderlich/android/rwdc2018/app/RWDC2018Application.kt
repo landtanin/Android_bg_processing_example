@@ -39,8 +39,11 @@ class RWDC2018Application : Application() {
 
   companion object {
     private lateinit var instance: RWDC2018Application
+    var isSongPlaying = false
 
     fun getAppContext(): Context = instance.applicationContext
+
+
   }
 
   override fun onCreate() {
