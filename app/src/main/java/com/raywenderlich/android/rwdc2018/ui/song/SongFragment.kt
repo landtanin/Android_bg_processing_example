@@ -107,8 +107,7 @@ class SongFragment : Fragment() {
 
     downloadButton.setOnClickListener {
       DownloadIntentService.startActionSongsDownload(view.context, SONG_URL)
-      playButton.isEnabled = false
-      stopButton.isEnabled = false
+      disableMediaButtons()
     }
 
     playButton.setOnClickListener {
